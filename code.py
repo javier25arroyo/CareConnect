@@ -26,30 +26,11 @@ print("Connecting to WiFi...")
 wifi.radio.connect("sspi", "password")  # Reemplaza con tus credenciales
 print("Connected!")
 
-# Configuración de Telegram
-TELEGRAM_BOT_TOKEN = "6420443163:AAG0SXFNkEMq5sB2EPyabrY6S9mGPk7W808"
-TELEGRAM_CHAT_ID = 5880741389
-
 # Variables para comparar la posición
 distancia_anterior = 0
 
 # Umbral de velocidad angular para detectar movimiento exponencial
 UMBRAL_VELOCIDAD_ANGULAR = 50
-
-def enviar_mensaje_telegram(mensaje):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    parametros = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'text': mensaje
-    }
-    try:
-        response = requests.post(url, json=parametros)
-        if response.status_code == 200:
-            print("Mensaje enviado a Telegram")
-        else:
-            print(f"Error al enviar el mensaje a Telegram. Status code: {response.status_code}")
-    except Exception as e:
-        print(f"Error desconocido: {e}")
 
 def mover_servo(angulo):
     """Mueve el servo al ángulo especificado (0-180 grados)."""
@@ -60,12 +41,9 @@ while True:
     try:
         # Medición de distancia con el sensor HC-SR04
         dist = sonar.distance
-
         # Verifica si la distancia ha cambiado
         if abs(dist - distancia_anterior) > 5:
-            mensaje = f"La posición ha cambiado. Nueva distancia: {dist} cm"
-            enviar_mensaje_telegram(mensaje)
-
+            print(f"La posición ha cambiado. Nueva distancia: {dist} cm")
         distancia_anterior = dist
 
         # Lecturas del sensor MPU6050
@@ -77,19 +55,17 @@ while True:
 
         # Verifica si la velocidad angular supera el umbral
         if velocidad_angular_total > UMBRAL_VELOCIDAD_ANGULAR:
-            mensaje_giroscopio = f"¡Movimiento exponencial detectado! Velocidad angular total: {velocidad_angular_total} grados/s"
-            enviar_mensaje_telegram(mensaje_giroscopio)
+            print(f"¡Movimiento exponencial detectado! Velocidad angular total: {velocidad_angular_total} grados/s")
 
         print("Aceleración (m/s^2):", accel_x, accel_y, accel_z)
         print("Direccion de la silla (grados/s):", gyro_x, gyro_y, gyro_z)
         print("Distancia:", dist)
 
-        # Movimiento del servo de 0 a 100 grados
-        for angulo in range(0, 101, 10):
+        # Movimiento del servo de 0 a 45 grados en incrementos de 2 grados
+        for angulo in range(0, 46, 2):
             mover_servo(angulo)
-            time.sleep(0.1)
-
+            time.sleep(0.1)  # 100 milisegundos
     except RuntimeError as e:
         print(f"Error: {e}")
     except Exception as e:
-        print(f"Error desconocido: {e}")
+        print(f"Error desconocido: {e}") # type: ignore
