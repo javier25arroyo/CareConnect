@@ -1,49 +1,40 @@
 import board
-from ideaboard import IdeaBoard
-from time import sleep
-from hcsr04 import HCSR04
 import pwmio
-import socketpool
-import ssl
-import wifi 
+import time
+from ideaboard import IdeaBoard
+from hcsr04 import HCSR04
 
-# Configuración del servo motor (pin 4)
-servo = board.IO4
-pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=50)
+# Configuración del pin PWM para el servo
+servo_pin = board.IO4
+pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=100)
 
-# Configuración del sensor de distancia HC-SR04
-                # echo       trig
-sonar = HCSR04(board.IO33 ,board.IO27)
+# Función para ajustar el ángulo del servo
+def set_angle(angle):
+    duty = int(65535 * (0.05 + (angle / 150) * 0.1))
+    pwm.duty_cycle = duty
 
-# Configuración de Wi-Fi
-print("Connecting to WiFi...")
-wifi.radio.connect("wifi", "password")  # Reemplaza con tus credenciales
-print("Connected!")
+# Configuración del sensor HCSR04
+sonar = HCSR04(board.IO33, board.IO27)
 
-# Variables para comparar la posición
-distancia_anterior = 0
-
-def mover_servo(angulo):
-    """Mueve el servo al ángulo especificado (0-180 grados)."""
-    duty_cycle = int(2 ** 15 + 2 ** 15 * (angulo / 180))
-    pwm.duty_cycle = duty_cycle
-
-while True:
-    try:
-        # Medición de distancia con el sensor HC-SR04
-        dist = sonar.distance
-        # Verifica si la distancia ha cambiado
-        if abs(dist - distancia_anterior) > 5:
-            print(f"La posición ha cambiado. Nueva distancia: {dist} cm")
-        distancia_anterior = dist
-
-        print("Distancia:", dist)
-
-        # Movimiento del servo de 0 a 45 grados en incrementos de 2 grados
-        for angulo in range(0, 46, 2):
-            mover_servo(angulo)
-            time.sleep(0.1)  # 100 milisegundos
-    except RuntimeError as e:
-        print(f"Error: {e}")
-    except Exception as e:
-        print(f"Error desconocido: {e}")  # type: ignore
+try:
+    while True:
+        # Leer la distancia del sensor
+        dist = sonar.dist_cm()
+        print(dist, "cm")
+        
+        # Mover el servo de 60° a 160° y viceversa
+        for angle in range(60, 160, 2):
+            set_angle(angle)
+            time.sleep(0.1)
+        
+        time.sleep(0.1)
+        
+        for angle in range(160, 60, -2):
+            set_angle(angle)
+            time.sleep(0.1)
+        
+        # Pequeña pausa antes de la siguiente lectura del sensor
+        time.sleep(0)
+        
+except KeyboardInterrupt:
+    pwm.deinit() # type: ignore
