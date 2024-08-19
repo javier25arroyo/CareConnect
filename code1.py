@@ -5,7 +5,9 @@ from ideaboard import IdeaBoard
 from hcsr04 import HCSR04
 
 TIEMPO_ENTRE_LECTURAS = 2
-NUM_REINTENTOS = 3
+NUM_LECTURAS = 15
+PROMEDIO_MOVIL_SIZE = 5
+PAUSE_TIME = 0.1
 
 # Configuración del pin PWM para el servo
 servo_pin = board.IO4
@@ -19,65 +21,70 @@ def set_angle(angle):
     duty = int(65535 * (0.05 + (angle / 150) * 0.1))
     pwm.duty_cycle = duty
 
+def leer_distancia():
+    """Lee la distancia del sensor con múltiples lecturas y filtrado."""
+    distancias = []
+    for _ in range(NUM_LECTURAS):
+        dist = sonar.dist_cm()
+        if dist is not None:
+            distancias.append(dist)
+        time.sleep(0.05)  # Pequeña pausa entre lecturas
+    
+    if distancias:
+        # Filtra las lecturas eliminando valores atípicos
+        distancias.sort()
+        # Elimina el 10% superior e inferior de las lecturas
+        n = len(distancias)
+        distancias = distancias[n//10 : -n//10]
+        # Calcula el promedio de las lecturas restantes
+        return sum(distancias) / len(distancias)
+    else:
+        return None
+
 def mover_servo_continuo():
     """Generador que mueve el servo de 60° a 160° y viceversa de manera continua."""
     while True:
         for angle in range(60, 160, 2):
             set_angle(angle)
             yield
-            time.sleep(0.1)
-        
-        time.sleep(0.1)
-        
+            time.sleep(PAUSE_TIME)
         for angle in range(160, 60, -2):
             set_angle(angle)
             yield
-            time.sleep(0.1)
-
-def leer_distancia():
-    """Lee la distancia del sensor con reintentos y filtrado."""
-    distancias = []
-    for _ in range(NUM_REINTENTOS):
-        dist = sonar.dist_cm()
-        if dist is not None:
-            distancias.append(dist)
-        time.sleep(0.1)
-    
-    if distancias:
-        # Filtra las lecturas eliminando valores atípicos
-        distancias.sort()
-        return distancias[len(distancias) // 2]  # Devuelve la mediana
-    else:
-        return None
+            time.sleep(PAUSE_TIME)
 
 def main():
-    servo_generator = mover_servo_continuo()
     last_distance_time = time.time()
+    lecturas = []
+    servo_generator = mover_servo_continuo()
 
     try:
         while True:
-            # Mueve el servo un paso
-            next(servo_generator)
-            
             # Verifica si han pasado 2 segundos para leer la distancia
             current_time = time.time()
             if current_time - last_distance_time >= TIEMPO_ENTRE_LECTURAS:
-                dist = leer_distancia()
-                if dist is not None:
-                    if dist > 100:
-                        meters = int(dist // 100)
-                        centimeters = dist % 100
-                        distance_str = f"{meters}.{int(centimeters):02d} m"
+                distancia = leer_distancia()
+                if distancia is not None:
+                    lecturas.append(distancia)
+                    if len(lecturas) > PROMEDIO_MOVIL_SIZE:
+                        lecturas.pop(0)
+                    promedio_distancia = sum(lecturas) / len(lecturas)
+                    
+                    if promedio_distancia > 100:
+                        meters = int(promedio_distancia // 100)
+                        centimeters = promedio_distancia % 100
+                        print(f"Dist: {meters}.{int(centimeters):02d} m")
                     else:
-                        distance_str = f"{dist:.1f} cm"
-                    # Enviar la distancia a la placa receptora
-                    esp.send(peer_mac, distance_str)
-                    print(f"Distancia enviada: {distance_str}")
+                        print(f"Dist: {promedio_distancia:.1f} cm")
                 else:
-                    print("Error al leer la distancia del sensor.")
-                
+                    print("Error en lectura.")
                 last_distance_time = current_time
-
+            
+            # Mover el servo
+            next(servo_generator)
+            
+            # Pequeña pausa antes de la siguiente lectura del sensor
+            time.sleep(0.01)
     except KeyboardInterrupt:
         pwm.deinit()
 
