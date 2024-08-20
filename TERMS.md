@@ -18,7 +18,7 @@ Las contribuciones al proyecto son bienvenidas. Si deseas contribuir, por favor,
 
 ## Contacto
 
-Para cualquier consulta o comentario sobre el proyecto, puede contactar a los autores a través del correo electrónico: [jpereza2@ucenfotec.ac.cr](mailto:javier25arojas@gmail.com) o [decheverriao@ucenfotec.ac.cr]()
+Para cualquier consulta o comentario sobre el proyecto, puede contactar a los autores a través del correo electrónico: [jpereza2@ucenfotec.ac.cr](mailto:javier25arojas@gmail.com) o [decheverriao@ucenfotec.ac.cr](daniel.echeorte19@gmail.com)
 ```
 
 []: # (END)
