@@ -12,6 +12,8 @@ Este proyecto ha sido desarrollado para la Expocenfo 2024 con el objetivo de dem
 - Sensor ultrasónico (HCSR04 o HCSR05)
 - Servo motor(MG90S micro servo)
 - Cables de conexión
+- Placa receptora (para visualizar las lecturas de distancia)
+- Pantalla LCD (LCD1604 16x4 Character LCD Display Module Blue Blacklight)
 - Software de programación (Thonny, uPyCraft o Arduino IDE)
 
 ### Instrucciones de Uso
@@ -26,6 +28,12 @@ Este proyecto ha sido desarrollado para la Expocenfo 2024 con el objetivo de dem
         - VCC -> 5V
         - GND -> GND
         - Señal -> Pin PWM (board.IO4)
+    - Conecta la placa receptora al microcontrolador para visualizar las lecturas de distancia.
+    - Conecta la pantalla LCD al microcontrolador para visualizar las lecturas de distancia.
+        - VCC -> 3.3V
+        - GND -> GND
+        - SDA -> Pin 21 (board.IO21)
+        - SCL -> Pin 22 (board.IO22)
 
 2. **Configuración del Software**:
     - Descarga e instala las bibliotecas necesarias para el sensor HCSR04 y el control del servo motor.
@@ -33,7 +41,7 @@ Este proyecto ha sido desarrollado para la Expocenfo 2024 con el objetivo de dem
 
 3. **Ejecución del Proyecto**:
     - Una vez cargado el código, el microcontrolador comenzará a leer las distancias del sensor HCSR04 y ajustará el ángulo del servo motor en consecuencia.
-    - Las lecturas de distancia se enviarán a una placa receptora y se imprimirán en la consola.
+    - Las lecturas de distancia se enviarán a una placa receptora y se imprimen en una pantalla LCD para su visualización.
 
 ## Información Adicional
 
@@ -41,7 +49,11 @@ Este proyecto ha sido desarrollado para la Expocenfo 2024 con el objetivo de dem
 
 El proyecto utiliza un sensor ultrasónico HCSR04 para medir la distancia a un objeto. El microcontrolador procesa estas lecturas y ajusta el ángulo de un servo motor en función de las mediciones obtenidas. El código incluye técnicas para mejorar la precisión de las lecturas, como la toma de múltiples lecturas y el filtrado de valores atípicos.
 
-### Código de Ejemplo
+## Código para Controlar el Servo y Leer Distancia
+
+### code1.py
+
+Este código controla un servo y lee la distancia utilizando un sensor ultrasónico. El servo se mueve continuamente entre 60° y 160°, y el sensor ultrasónico toma múltiples lecturas para calcular una distancia promedio.
 
 ```python
 import board
@@ -50,13 +62,12 @@ import time
 from ideaboard import IdeaBoard
 from hcsr04 import HCSR04
 
-# Constantes para el tiempo entre lecturas y el número de lecturas
 TIEMPO_ENTRE_LECTURAS = 2
 NUM_LECTURAS = 20
 
 # Configuración del pin PWM para el servo
 servo_pin = board.IO4
-pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=100)
+pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=50)  # Asegúrate de que la frecuencia sea correcta para tu servo
 
 # Configuración del sensor HCSR04
 sonar = HCSR04(board.IO33, board.IO27)
@@ -111,10 +122,6 @@ def leer_distancia():
         return None
 
 def main():
-    """Función principal que controla el movimiento del servo y la lectura de distancias.
-    
-    Mueve el servo continuamente y lee la distancia del sensor cada cierto intervalo de tiempo.
-    """
     servo_generator = mover_servo_continuo()
     last_distance_time = time.time()
 
@@ -131,9 +138,10 @@ def main():
                     if dist > 100:
                         meters = int(dist // 100)
                         centimeters = dist % 100
-                        print(f"Dist: {meters}.{int(centimeters):02d} m")
+                        distance_str = f"Dist: {meters}.{int(centimeters):02d} m"
                     else:
-                        print(f"Dist: {dist:.1f} cm")
+                        distance_str = f"Dist: {dist:.1f} cm"
+                    print(distance_str)
                 else:
                     print("Error en lectura.")
                 last_distance_time = current_time
@@ -143,3 +151,44 @@ def main():
             
 if __name__ == "__main__":
     main()
+```
+
+## Codigos para la Placa Receptora
+
+### code2.py
+
+Este código recibe las lecturas de distancia enviadas por el microcontrolador y las muestra en la pantalla LCD.
+
+```python
+
+# Importar las bibliotecas necesarias
+import espnow
+import board
+import busio
+import time
+import adafruit_character_lcd.character_lcd_i2c as character_lcd
+
+# Configurar ESP-NOW
+e = espnow.ESPNow()
+
+# Configurar la pantalla LCD
+i2c = busio.I2C(board.SCL, board.SDA)
+lcd_columns = 16
+lcd_rows = 4
+lcd = character_lcd.Character_LCD_I2C(i2c, lcd_columns, lcd_rows)
+
+packets = []
+
+while True:
+    if e:
+       # Leer el paquete de ESP-NOW
+        packet = e.read()
+        if packet:
+            # Decodificar el mensaje del paquete.
+            message = packet.msg.decode()
+            packets.append(message)
+            lcd.clear()
+            lcd.message = message  # Mostrar el mensaje en la pantalla LCD.
+            print(message)  # Imprime el mensaje a la consola.
+            time.sleep(0.1)
+            time.sleep(0.1)
