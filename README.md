@@ -20,12 +20,12 @@ Este proyecto ha sido desarrollado para la Expocenfo 2024 con el objetivo de dem
 
 1. **Conexión del Hardware**:
     - Conecta el sensor HCSR04 al microcontrolador según el siguiente esquema:
-        - VCC -> 5V
+        - VCC -> 3.3V
         - GND -> GND
         - TRIG -> Pin digital (board.IO27)
         - ECHO -> Pin digital (board.IO33)
     - Conecta el servo motor al microcontrolador:
-        - VCC -> 5V
+        - VCC -> 3.3V
         - GND -> GND
         - Señal -> Pin PWM (board.IO4)
     - Conecta la placa receptora al microcontrolador para visualizar las lecturas de distancia.
@@ -216,12 +216,12 @@ This project was developed for Expocenfo 2024 with the goal of demonstrating the
 
 1. **Hardware Connection**:
     - Connect the HCSR04 sensor to the microcontroller according to the following scheme:
-        - VCC -> 5V
+        - VCC -> 3.3V
         - GND -> GND
         - TRIG -> Digital pin (board.IO27)
         - ECHO -> Digital pin (board.IO33)
     - Connect the servo motor to the microcontroller:
-        - VCC -> 5V
+        - VCC -> 3.3V
         - GND -> GND
         - Signal -> PWM pin (board.IO4)
     - Connect the receiving board to the microcontroller to display distance readings.
