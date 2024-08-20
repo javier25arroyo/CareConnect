@@ -1,10 +1,16 @@
 import board
 import pwmio
 import time
+import espnow
 from ideaboard import IdeaBoard
 from hcsr04 import HCSR04
 
-TIEMPO_ENTRE_LECTURAS = 2
+# Configuración ESP-NOW
+e = espnow.ESPNow()
+peer = espnow.Peer(mac = b'\xd4\xd4\xda\x16\xb4\x9c')  
+e.peers.append(peer)
+
+TIEMPO_ENTRE_LECTURAS = 2.5
 NUM_LECTURAS = 15
 PROMEDIO_MOVIL_SIZE = 5
 PAUSE_TIME = 0.1
@@ -31,12 +37,9 @@ def leer_distancia():
         time.sleep(0.05)  # Pequeña pausa entre lecturas
     
     if distancias:
-        # Filtra las lecturas eliminando valores atípicos
         distancias.sort()
-        # Elimina el 10% superior e inferior de las lecturas
         n = len(distancias)
         distancias = distancias[n//10 : -n//10]
-        # Calcula el promedio de las lecturas restantes
         return sum(distancias) / len(distancias)
     else:
         return None
@@ -44,11 +47,11 @@ def leer_distancia():
 def mover_servo_continuo():
     """Generador que mueve el servo de 60° a 160° y viceversa de manera continua."""
     while True:
-        for angle in range(60, 160, 2):
+        for angle in range(40, 160, 2):
             set_angle(angle)
             yield
             time.sleep(PAUSE_TIME)
-        for angle in range(160, 60, -2):
+        for angle in range(160, 40, -2):
             set_angle(angle)
             yield
             time.sleep(PAUSE_TIME)
@@ -73,9 +76,12 @@ def main():
                     if promedio_distancia > 100:
                         meters = int(promedio_distancia // 100)
                         centimeters = promedio_distancia % 100
-                        print(f"Dist: {meters}.{int(centimeters):02d} m")
+                        mensaje = f"Dist: {meters}.{int(centimeters):02d} m"
                     else:
-                        print(f"Dist: {promedio_distancia:.1f} cm")
+                        mensaje = f"Dist: {promedio_distancia:.1f} cm"
+                    
+                    print(mensaje)
+                    e.send(mensaje.encode())  # Enviar el mensaje a través de ESP-NOW
                 else:
                     print("Error en lectura.")
                 last_distance_time = current_time
