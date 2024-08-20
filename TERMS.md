@@ -18,4 +18,29 @@ Las contribuciones al proyecto son bienvenidas. Si deseas contribuir, por favor,
 
 ## Contacto
 
-Para cualquier consulta o comentario sobre el proyecto, puedes contactar al autor a través del correo electrónico: [javier25arojas@gmail.com](mailto:javier25arojas@gmail.com).
+Para cualquier consulta o comentario sobre el proyecto, puede contactar a los autores a través del correo electrónico: [jpereza2@ucenfotec.ac.cr](mailto:javier25arojas@gmail.com) o [decheverriao@ucenfotec.ac.cr]()
+```
+
+[]: # (END)
+
+
+# Terms of Use
+
+## License
+
+This project is licensed under the MIT License. You may use, modify, and distribute this software in accordance with the terms of the MIT License.
+
+## Limitation of Liability
+
+The author is not responsible for any damages that may arise from the use of this software. The software is provided "as is," without any kind of warranty.
+
+## Contributions
+
+Contributions to the project are welcome. If you would like to contribute, please open an issue or submit a pull request on the project's repository.
+
+## Contact
+
+For any inquiries or comments about the project, you can contact the authors via email: [jpereza2@ucenfotec.ac.cr](mailto:jpereza2@ucenfotec.ac.cr) or [decheverriao@ucenfotec.ac.cr](mailto:decheverriao@ucenfotec.ac.cr)().
+
+[]: # (END)
+```
