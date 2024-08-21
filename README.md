@@ -163,37 +163,53 @@ Este código recibe las lecturas de distancia enviadas por el microcontrolador y
 
 # Importar las bibliotecas necesarias
 import espnow
-import board
-import busio
 import time
-import adafruit_character_lcd.character_lcd_i2c as character_lcd
+import board
+from lcd import LCD
+from i2c_pcf8574_interface import I2CPCF8574Interface
+from lcd import CursorMode
 
-# Configurar ESP-NOW
+TIEMPO_ENTRE_LECTURAS = 2.5
+
+# Configuración de ESP-NOW
 e = espnow.ESPNow()
-
-# Configurar la pantalla LCD
-i2c = busio.I2C(board.SCL, board.SDA)
+i2c = board.I2C()
 lcd_columns = 16
 lcd_rows = 4
-lcd = character_lcd.Character_LCD_I2C(i2c, lcd_columns, lcd_rows)
+lcd = LCD(I2CPCF8574Interface(i2c, 0x27), num_rows=lcd_rows, num_cols=lcd_columns)
 
+# Lista para almacenar los paquetes recibidos
 packets = []
+last_print_time = time.time()
 
+
+# Bucle principal para leer y mostrar las lecturas de distancia
 while True:
-    if e:
-       # Leer el paquete de ESP-NOW
-        packet = e.read()
-        if packet:
-            # Decodificar el mensaje del paquete.
-            message = packet.msg.decode()
-            packets.append(message)
-            lcd.clear()
-            lcd.message = message  # Mostrar el mensaje en la pantalla LCD.
-            print(message)  # Imprime el mensaje a la consola.
-            time.sleep(0.1)
+    try:
+        if e:
+            packet = e.read()
+            if packet:
+                message = packet.msg.decode()
+                packets.append(message)
 
-```
+                # Solo imprimir la distancia cada 2.5 segundos
+                current_time = time.time()
+                if current_time - last_print_time >= 2.5:
+                    lcd.clear()
+                    lcd.set_cursor_pos(0, 0)
+                    lcd.print(message[:16])
 
+                    if len(message) > 16:
+                        lcd.set_cursor_pos(1, 0)
+                        lcd.print(message[16:32])
+
+                    print(f"Distancia: {message}")  # Imprimir solo la distancia en la consola
+                    last_print_time = current_time
+
+                time.sleep(0.1)
+    except Exception as e:
+        print(f"Error: {e}")
+        time.sleep(TIEMPO_ENTRE_LECTURAS)  # Esperar 2.5 segundos antes de intentar nuevamente
 # Project for Expocenfo 2024
 
 ## Project Purpose
@@ -361,36 +377,52 @@ This code receives distance readings sent by the microcontroller and displays th
 
 # Import the necessary libraries
 import espnow
-import board
-import busio
 import time
-import adafruit_character_lcd.character_lcd_i2c as character_lcd
+import board
+from lcd import LCD
+from i2c_pcf8574_interface import I2CPCF8574Interface
+from lcd import CursorMode
 
-# Set up ESP-NOW
+TIEMPO_ENTRE_LECTURAS = 2.5
+
+# ESP-NOW configuration
 e = espnow.ESPNow()
-
-# Set up the LCD screen
-i2c = busio.I2C(board.SCL, board.SDA)
+i2c = board.I2C()
 lcd_columns = 16
 lcd_rows = 4
-lcd = character_lcd.Character_LCD_I2C(i2c, lcd_columns, lcd_rows)
+lcd = LCD(I2CPCF8574Interface(i2c, 0x27), num_rows=lcd_rows, num_cols=lcd_columns)
 
+# List to store received packets
 packets = []
+last_print_time = time.time()
 
+# Main loop to read and display distance readings
 while True:
-    if e:
-       # Read the ESP-NOW packet
-        packet = e.read()
-        if packet:
-            # Decode the message from the packet
-            message = packet.msg.decode()
-            packets.append(message)
-            lcd.clear()
-            lcd.message = message  # Display the message on the LCD screen.
-            print(message)  # Print the message to the console.
-            time.sleep(0.1)
+    try:
+        if e:
+            packet = e.read()
+            if packet:
+                message = packet.msg.decode()
+                packets.append(message)
 
+                # Only print the distance every 2.5 seconds
+                current_time = time.time()
+                if current_time - last_print_time >= 2.5:
+                    lcd.clear()
+                    lcd.set_cursor_pos(0, 0)
+                    lcd.print(message[:16])
 
+                    if len(message) > 16:
+                        lcd.set_cursor_pos(1, 0)
+                        lcd.print(message[16:32])
+
+                    print(f"Distancia: {message}")  # Print only the distance to the console
+                    last_print_time = current_time
+
+                time.sleep(0.1)
+    except Exception as e:
+        print(f"Error: {e}")
+        time.sleep(TIEMPO_ENTRE_LECTURAS)  # Wait 2.5 seconds before trying again
 ```
 
 []: # (END)
