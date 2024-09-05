@@ -1,6 +1,5 @@
 ### TERMS.md
 
-```markdown
 # Términos de Uso
 
 ## Licencia
@@ -17,13 +16,15 @@ Las contribuciones al proyecto son bienvenidas. Si deseas contribuir, por favor,
 
 ## Contacto
 
-Para cualquier consulta o comentario sobre el proyecto, puede contactar a los autores a través del correo electrónico: [jpereza2@ucenfotec.ac.cr](mailto:javier25arojas@gmail.com) o [decheverriao@ucenfotec.ac.cr](daniel.echeorte19@gmail.com)
+Para cualquier consulta o comentario sobre el proyecto, puede contactar a los autores a través del correo electrónico: [jpereza2@ucenfotec.ac.cr](mailto:jpereza2@ucenfotec.ac.cr) o [decheverriao@ucenfotec.ac.cr](mailto:decheverriao@ucenfotec.ac.cr)
 ```
 
-[]: # (END)
 
+```
 
-# Terms of Use
+### TERMS.md
+
+# Términos de Uso
 
 ## License
 
@@ -39,7 +40,6 @@ Contributions to the project are welcome. If you would like to contribute, pleas
 
 ## Contact
 
-For any inquiries or comments about the project, you can contact the authors via email: [jpereza2@ucenfotec.ac.cr](mailto:jpereza2@ucenfotec.ac.cr) or [decheverriao@ucenfotec.ac.cr](mailto:decheverriao@ucenfotec.ac.cr)().
+For any inquiries or comments about the project, you can contact the authors via email: [jpereza2@ucenfotec.ac.cr](mailto:jpereza2@ucenfotec.ac.cr) or [decheverriao@ucenfotec.ac.cr](mailto:decheverriao@ucenfotec.ac.cr).
 
-[]: # (END)
 ```
