@@ -1,4 +1,3 @@
-
 ### TERMS.md
 
 ```markdown

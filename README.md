@@ -210,6 +210,9 @@ while True:
     except Exception as e:
         print(f"Error: {e}")
         time.sleep(TIEMPO_ENTRE_LECTURAS)  # Esperar 2.5 segundos antes de intentar nuevamente
+```
+    
+
 # Project for Expocenfo 2024
 
 ## Project Purpose
@@ -425,5 +428,3 @@ while True:
         time.sleep(TIEMPO_ENTRE_LECTURAS)  # Wait 2.5 seconds before trying again
 ```
 
-[]: # (END)
-```markdown
