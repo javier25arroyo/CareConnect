@@ -1,4 +1,4 @@
-# Proyecto para la Expocenfo 2024
+# CareConect 2024
 
 ## Propósito del Proyecto
 
@@ -213,7 +213,7 @@ while True:
 ```
     
 
-# Project for Expocenfo 2024
+# CareConect 2024
 
 ## Project Purpose
 

@@ -20,7 +20,6 @@ Para cualquier consulta o comentario sobre el proyecto, puede contactar a los au
 ```
 
 
-```
 
 ### TERMS.md
 
