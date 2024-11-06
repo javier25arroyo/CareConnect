@@ -59,50 +59,34 @@ Este código controla un servo y lee la distancia utilizando un sensor ultrasón
 import board
 import pwmio
 import time
+import espnow
 from ideaboard import IdeaBoard
 from hcsr04 import HCSR04
 
-TIEMPO_ENTRE_LECTURAS = 2
-NUM_LECTURAS = 20
+# Configuración ESP-NOW
+e = espnow.ESPNow()
+peer = espnow.Peer(mac = b'\xd4\xd4\xda\x16\xb4\x9c')  
+e.peers.append(peer)
+
+TIEMPO_ENTRE_LECTURAS = 2.5
+NUM_LECTURAS = 15
+PROMEDIO_MOVIL_SIZE = 5
+PAUSE_TIME = 0.1
 
 # Configuración del pin PWM para el servo
 servo_pin = board.IO4
-pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=50)  # Asegúrate de que la frecuencia sea correcta para tu servo
+pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=100)
 
 # Configuración del sensor HCSR04
 sonar = HCSR04(board.IO33, board.IO27)
 
 def set_angle(angle):
-    """Ajusta el ángulo del servo.
-    
-    Calcula el ciclo de trabajo (duty cycle) necesario para ajustar el ángulo del servo y lo aplica.
-    """
+    """Ajusta el ángulo del servo."""
     duty = int(65535 * (0.05 + (angle / 150) * 0.1))
     pwm.duty_cycle = duty
 
-def mover_servo_continuo():
-    """Generador que mueve el servo de 60° a 160° y viceversa de manera continua.
-    
-    Este generador mueve el servo en pasos de 2 grados desde 60° hasta 160° y luego de vuelta a 60°.
-    """
-    while True:
-        for angle in range(60, 160, 2):
-            set_angle(angle)
-            yield
-            time.sleep(0.1)
-        
-        time.sleep(0.1)
-        
-        for angle in range(160, 60, -2):
-            set_angle(angle)
-            yield
-            time.sleep(0.1)
-
 def leer_distancia():
-    """Lee la distancia del sensor con múltiples lecturas y filtrado.
-    
-    Toma múltiples lecturas del sensor ultrasónico, filtra los valores atípicos y calcula el promedio de las lecturas restantes.
-    """
+    """Lee la distancia del sensor con múltiples lecturas y filtrado."""
     distancias = []
     for _ in range(NUM_LECTURAS):
         dist = sonar.dist_cm()
@@ -111,44 +95,63 @@ def leer_distancia():
         time.sleep(0.05)  # Pequeña pausa entre lecturas
     
     if distancias:
-        # Filtra las lecturas eliminando valores atípicos
         distancias.sort()
-        # Elimina el 10% superior e inferior de las lecturas
         n = len(distancias)
         distancias = distancias[n//10 : -n//10]
-        # Calcula el promedio de las lecturas restantes
         return sum(distancias) / len(distancias)
     else:
         return None
 
+def mover_servo_continuo():
+    """Generador que mueve el servo de 60° a 160° y viceversa de manera continua."""
+    while True:
+        for angle in range(40, 160, 2):
+            set_angle(angle)
+            yield
+            time.sleep(PAUSE_TIME)
+        for angle in range(160, 40, -2):
+            set_angle(angle)
+            yield
+            time.sleep(PAUSE_TIME)
+
 def main():
-    servo_generator = mover_servo_continuo()
     last_distance_time = time.time()
+    lecturas = []
+    servo_generator = mover_servo_continuo()
 
     try:
         while True:
-            # Mueve el servo un paso
-            next(servo_generator)
-            
             # Verifica si han pasado 2 segundos para leer la distancia
             current_time = time.time()
             if current_time - last_distance_time >= TIEMPO_ENTRE_LECTURAS:
-                dist = leer_distancia()
-                if dist is not None:
-                    if dist > 100:
-                        meters = int(dist // 100)
-                        centimeters = dist % 100
-                        distance_str = f"Dist: {meters}.{int(centimeters):02d} m"
+                distancia = leer_distancia()
+                if distancia is not None:
+                    lecturas.append(distancia)
+                    if len(lecturas) > PROMEDIO_MOVIL_SIZE:
+                        lecturas.pop(0)
+                    promedio_distancia = sum(lecturas) / len(lecturas)
+                    
+                    if promedio_distancia > 100:
+                        meters = int(promedio_distancia // 100)
+                        centimeters = promedio_distancia % 100
+                        mensaje = f"Dist: {meters}.{int(centimeters):02d} m"
                     else:
-                        distance_str = f"Dist: {dist:.1f} cm"
-                    print(distance_str)
+                        mensaje = f"Dist: {promedio_distancia:.1f} cm"
+                    
+                    print(mensaje)
+                    e.send(mensaje.encode())  # Enviar el mensaje a través de ESP-NOW
                 else:
                     print("Error en lectura.")
                 last_distance_time = current_time
             
+            # Mover el servo
+            next(servo_generator)
+            
+            # Pequeña pausa antes de la siguiente lectura del sensor
+            time.sleep(0.01)
     except KeyboardInterrupt:
         pwm.deinit()
-            
+
 if __name__ == "__main__":
     main()
 ```
@@ -274,96 +277,99 @@ This code controls a servo and reads the distance using an ultrasonic sensor. Th
 import board
 import pwmio
 import time
+import espnow
 from ideaboard import IdeaBoard
 from hcsr04 import HCSR04
 
-READING_INTERVAL = 2
-NUM_READINGS = 20
+# Configuración ESP-NOW
+e = espnow.ESPNow()
+peer = espnow.Peer(mac = b'\xd4\xd4\xda\x16\xb4\x9c')  
+e.peers.append(peer)
+
+TIEMPO_ENTRE_LECTURAS = 2.5
+NUM_LECTURAS = 15
+PROMEDIO_MOVIL_SIZE = 5
+PAUSE_TIME = 0.1
 
 # PWM pin configuration for the servo
 servo_pin = board.IO4
-pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=50)  # Ensure the frequency is correct for your servo
+pwm = pwmio.PWMOut(servo_pin, duty_cycle=0, frequency=100)
 
-# HCSR04 sensor configuration
+# HCSR04 Sensor Configuration
 sonar = HCSR04(board.IO33, board.IO27)
 
 def set_angle(angle):
-    """Adjusts the servo angle.
-    
-    Calculates the duty cycle needed to set the servo angle and applies it.
-    """
+    """Ajusta el ángulo del servo."""
     duty = int(65535 * (0.05 + (angle / 150) * 0.1))
     pwm.duty_cycle = duty
 
-def move_servo_continuous():
-    """Generator that continuously moves the servo from 60° to 160° and back.
-    
-    This generator moves the servo in 2-degree steps from 60° to 160° and then back to 60°.
-    """
-    while True:
-        for angle in range(60, 160, 2):
-            set_angle(angle)
-            yield
-            time.sleep(0.1)
-        
-        time.sleep(0.1)
-        
-        for angle in range(160, 60, -2):
-            set_angle(angle)
-            yield
-            time.sleep(0.1)
-
-def read_distance():
-    """Reads the distance from the sensor with multiple readings and filtering.
-    
-    Takes multiple readings from the ultrasonic sensor, filters outliers, and calculates the average of the remaining readings.
-    """
-    distances = []
-    for _ in range(NUM_READINGS):
+def leer_distancia():
+    """Read the distance from the sensor with multiple readings and filtering."""
+    distancias = []
+    for _ in range(NUM_LECTURAS):
         dist = sonar.dist_cm()
         if dist is not None:
-            distances.append(dist)
-        time.sleep(0.05)  # Small pause between readings
+            distancias.append(dist)
+        time.sleep(0.05)  # Pequeña pausa entre lecturas
     
-    if distances:
-        # Filter readings by removing outliers
-        distances.sort()
-        # Remove the top and bottom 10% of readings
-        n = len(distances)
-        distances = distances[n//10 : -n//10]
-        # Calculate the average of the remaining readings
-        return sum(distances) / len(distances)
+    if distancias:
+        distancias.sort()
+        n = len(distancias)
+        distancias = distancias[n//10 : -n//10]
+        return sum(distancias) / len(distancias)
     else:
         return None
 
+def mover_servo_continuo():
+    """Generator that moves the servo from 60° to 160° and vice versa continuously"""
+    while True:
+        for angle in range(40, 160, 2):
+            set_angle(angle)
+            yield
+            time.sleep(PAUSE_TIME)
+        for angle in range(160, 40, -2):
+            set_angle(angle)
+            yield
+            time.sleep(PAUSE_TIME)
+
 def main():
-    servo_generator = move_servo_continuous()
     last_distance_time = time.time()
+    lecturas = []
+    servo_generator = mover_servo_continuo()
 
     try:
         while True:
-            # Move the servo one step
-            next(servo_generator)
-            
             # Check if 2 seconds have passed to read the distance
             current_time = time.time()
-            if current_time - last_distance_time >= READING_INTERVAL:
-                dist = read_distance()
-                if dist is not None:
-                    if dist > 100:
-                        meters = int(dist // 100)
-                        centimeters = dist % 100
-                        distance_str = f"Dist: {meters}.{int(centimeters):02d} m"
+            if current_time - last_distance_time >= TIEMPO_ENTRE_LECTURAS:
+                distancia = leer_distancia()
+                if distancia is not None:
+                    lecturas.append(distancia)
+                    if len(lecturas) > PROMEDIO_MOVIL_SIZE:
+                        lecturas.pop(0)
+                    promedio_distancia = sum(lecturas) / len(lecturas)
+                    
+                    if promedio_distancia > 100:
+                        meters = int(promedio_distancia // 100)
+                        centimeters = promedio_distancia % 100
+                        mensaje = f"Dist: {meters}.{int(centimeters):02d} m"
                     else:
-                        distance_str = f"Dist: {dist:.1f} cm"
-                    print(distance_str)
+                        mensaje = f"Dist: {promedio_distancia:.1f} cm"
+                    
+                    print(mensaje)
+                    e.send(mensaje.encode())  # Enviar el mensaje a través de ESP-NOW
                 else:
-                    print("Error in reading.")
+                    print("Error en lectura.")
                 last_distance_time = current_time
             
+            # Move the servo
+            next(servo_generator)
+            
+            # Short pause before next sensor reading
+            time.sleep(0.01)
     except KeyboardInterrupt:
         pwm.deinit()
-            
+
 if __name__ == "__main__":
     main()
 
